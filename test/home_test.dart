@@ -169,4 +169,80 @@ void main() {
       expect(find.text('Chaves com chaveiro azul'), findsOneWidget);
     },
   );
+  testWidgets('photo listings expose the full accessible action', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1300);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final semantics = tester.ensureSemantics();
+    final repository = MemoryRepository();
+    repository.values = [
+      Listing.create(
+        id: 'photo',
+        title: 'Chave com foto',
+        description: 'Exemplo fictício no parque',
+        area: 'Centro',
+        category: Category.accessories,
+        kind: ListingKind.found,
+        photo:
+            'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAAtUlEQVR4nO3QQQkAIADAQCOb0UJWsIIfGcLBAowbe01dNvKDj4IFC1YeLFiw8mDBgpUHCxasPFiwYOXBggUrDxYsWHmwYMHKgwULVh4sWLDyYMGClQcLFqw8WLBg5cGCBSsPFixYebBgwcqDBQtWHixYsPJgwYKVBwsWrDxYsGDlwYIFKw8WLFh5sGDByoMFC1YeLFiw8mDBgpUHCxasPFiwYOXBggUrDxYsWHmwYMHKgwXrTQdk5i3uXwA+aQAAAABJRU5ErkJggg==',
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(home: Home(repository: () async => repository)),
+    );
+    await tester.pumpAndSettle();
+    final action = find.bySemanticsLabel(
+      RegExp(r'Chave com foto.*Encontrado.*Centro.*Ver detalhes'),
+    );
+    expect(action, findsOneWidget);
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    expect(find.text('Simular resolução'), findsOneWidget);
+    semantics.dispose();
+  });
+  testWidgets('stale retry cannot replace a newer saved listing', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = MemoryRepository()..failSave = true;
+    await tester.pumpWidget(
+      MaterialApp(home: Home(repository: () async => repository)),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Carregar 3 exemplos fictícios'));
+    await tester.tap(find.text('Carregar 3 exemplos fictícios'));
+    await tester.pumpAndSettle();
+    repository.failSave = false;
+    await tester.ensureVisible(find.text('Registrar objeto'));
+    await tester.tap(find.text('Registrar objeto'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Nome do objeto'),
+      'Objeto novo',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Descrição pública'),
+      'Outro registro fictício',
+    );
+    await tester.enterText(
+      find.widgetWithText(
+        TextFormField,
+        'Bairro ou espaço público (sem endereço)',
+      ),
+      'Centro',
+    );
+    await tester.tap(find.text('Salvar neste navegador'));
+    await tester.pumpAndSettle();
+    expect(repository.values.single.title, 'Objeto novo');
+    await tester.tap(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
+    expect(repository.values.single.title, 'Objeto novo');
+  });
 }

@@ -86,6 +86,7 @@ class _HomeState extends State<Home> {
   Future<bool> save(List<Listing> next) async {
     if (busy || repository == null) return false;
     setState(() => busy = true);
+    final previous = items;
     try {
       await repository!.save(next);
       if (!mounted) return false;
@@ -100,7 +101,22 @@ class _HomeState extends State<Home> {
             ),
             action: SnackBarAction(
               label: t('Tentar novamente', 'Retry'),
-              onPressed: () => save(next),
+              onPressed: () {
+                if (identical(items, previous)) {
+                  save(next);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        t(
+                          'Os registros mudaram. Revise o cadastro antes de tentar novamente.',
+                          'Listings changed. Review your listing before retrying.',
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
           ),
         );
@@ -777,117 +793,129 @@ class _HomeState extends State<Home> {
     final found = item.kind == ListingKind.found;
     final resolved = item.status == ListingStatus.resolved;
     final color = found ? const Color(0xffe3ece5) : const Color(0xfff3e8d4);
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xffe3e6df)),
-      ),
-      child: InkWell(
-        onTap: busy ? null : () => details(item),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 142,
-              width: double.infinity,
-              color: color,
-              child: item.photo == null
-                  ? Center(
-                      child: Icon(
-                        categoryIcon(item.category),
-                        size: 66,
-                        color: teal,
-                      ),
-                    )
-                  : Image.memory(
-                      base64Decode(item.photo!),
-                      fit: BoxFit.cover,
-                      semanticLabel: item.title,
-                      errorBuilder: (_, _, _) =>
-                          const Icon(Icons.broken_image_outlined),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    resolved
-                        ? t('RESOLVIDO · SIMULAÇÃO', 'RESOLVED · SIMULATION')
-                        : found
-                        ? t('ENCONTRADO', 'FOUND')
-                        : t('PERDIDO', 'LOST'),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1,
-                      color: found ? teal : const Color(0xff795422),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: ink,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    item.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      height: 1.5,
-                      color: Color(0xff52645e),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Icon(Icons.place_outlined, size: 17, color: teal),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          item.area,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 28),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          categoryLabel(item.category, en),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Text(
-                        t('Ver detalhes', 'View details'),
-                        style: const TextStyle(
+    final stateLabel = resolved
+        ? t('Resolvido, simulação', 'Resolved, simulation')
+        : found
+        ? t('Encontrado', 'Found')
+        : t('Perdido', 'Lost');
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      label:
+          '${item.title}. $stateLabel. ${item.description}. ${item.area}. ${categoryLabel(item.category, en)}. ${t('Ver detalhes', 'View details')}',
+      onTap: busy ? null : () => details(item),
+      child: Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xffe3e6df)),
+        ),
+        child: InkWell(
+          onTap: busy ? null : () => details(item),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 142,
+                width: double.infinity,
+                color: color,
+                child: item.photo == null
+                    ? Center(
+                        child: Icon(
+                          categoryIcon(item.category),
+                          size: 66,
                           color: teal,
-                          fontWeight: FontWeight.w700,
                         ),
+                      )
+                    : Image.memory(
+                        base64Decode(item.photo!),
+                        fit: BoxFit.cover,
+                        semanticLabel: item.title,
+                        errorBuilder: (_, _, _) =>
+                            const Icon(Icons.broken_image_outlined),
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward, size: 17, color: teal),
-                    ],
-                  ),
-                ],
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      resolved
+                          ? t('RESOLVIDO · SIMULAÇÃO', 'RESOLVED · SIMULATION')
+                          : found
+                          ? t('ENCONTRADO', 'FOUND')
+                          : t('PERDIDO', 'LOST'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                        color: found ? teal : const Color(0xff795422),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: ink,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      item.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        height: 1.5,
+                        color: Color(0xff52645e),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Icon(Icons.place_outlined, size: 17, color: teal),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            item.area,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 28),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            categoryLabel(item.category, en),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        Text(
+                          t('Ver detalhes', 'View details'),
+                          style: const TextStyle(
+                            color: teal,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward, size: 17, color: teal),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
