@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // No remote adapter is shipped. Keep all access closed until authenticated
+    // ownership, transition validation and moderation have emulator tests.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
