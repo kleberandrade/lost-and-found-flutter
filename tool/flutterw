@@ -1,0 +1,16 @@
+#!/bin/sh
+# Optional local wrapper; standard environments can run flutter directly.
+set -eu
+export FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true
+if [ -n "${LOST_FOUND_PUB_CACHE:-}" ]; then
+  export PUB_CACHE="$LOST_FOUND_PUB_CACHE"
+elif [ -d /Users/kleber/Projects/.toolchains/lost-and-found/pub-cache ]; then
+  export PUB_CACHE=/Users/kleber/Projects/.toolchains/lost-and-found/pub-cache
+fi
+if [ -n "${LOST_FOUND_FLUTTER:-}" ]; then
+  exec "$LOST_FOUND_FLUTTER" "$@"
+elif [ -x /Users/kleber/Projects/.toolchains/lost-and-found/flutter/bin/flutter ]; then
+  exec /Users/kleber/Projects/.toolchains/lost-and-found/flutter/bin/flutter "$@"
+else
+  exec flutter "$@"
+fi
