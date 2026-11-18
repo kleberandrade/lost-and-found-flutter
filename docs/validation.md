@@ -32,7 +32,7 @@ The installed development guidance referred to `crapper`, `dryer` and `mutator`;
 5. Toggle PT-BR/EN; user content persists. Inspect desktop and mobile controls and keyboard focus.
 6. Simulate corrupt storage or failed writes using tests; verify records are not silently replaced and retries work.
 
-GitHub metadata is updated with a descriptive summary and seven relevant topics. CI configuration runs analysis, tests and Web build; remote CI results are reported separately from local results.
+GitHub metadata is updated with a descriptive summary and seven relevant topics. CI configuration runs analysis, tests and Web build. The automatic approval review rejected the code push because it required specific approval for sending this application to GitHub; no push or remote CI run is claimed. All implementation and documentation commits are ready locally. No deployment was attempted.
 
 ## Repeat the browser check
 

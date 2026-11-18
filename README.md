@@ -49,7 +49,7 @@ Desktop capture of the actual compiled Web application with explicitly loaded fi
 
 Mobile browser viewport, not an Android/iOS device certification. The cover above is a separate conceptual SVG illustration.
 
-![Mobile search, filters and fictional listing cards.](docs/screenshots/mobile-listings.png)
+![Mobile filters and fictional listing cards.](docs/screenshots/mobile-listings.png)
 
 ## Architecture and examples
 
